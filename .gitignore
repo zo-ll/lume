@@ -1,0 +1,21 @@
+# Binaries
+/lume
+*.exe
+*.exe~
+
+# Go workspace
+go.work
+go.work.sum
+
+# Test artifacts
+*.test
+*.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
