@@ -6,11 +6,11 @@ license.workspace = true
 rust-version.workspace = true
 
 [build-dependencies]
-tauri-build = "2.6.3"
+tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 serde.workspace = true
-tauri = "2.11.5"
+tauri = { version = "2.11.5", features = [] }
 
 [lints]
 workspace = true
