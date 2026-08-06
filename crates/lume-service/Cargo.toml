@@ -1,0 +1,23 @@
+[package]
+name = "lume-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-stream.workspace = true
+futures.workspace = true
+lume-protocol = { path = "../lume-protocol" }
+lume-storage = { path = "../lume-storage" }
+tokio.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

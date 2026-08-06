@@ -1,0 +1,315 @@
+syntax = "proto3";
+
+package lume.runtime.v1;
+
+service RuntimeIngest {
+  rpc RuntimeSession(stream RuntimeEnvelope) returns (stream ServiceEnvelope);
+}
+
+message RuntimeEnvelope {
+  oneof message {
+    Handshake handshake = 1;
+    Observation observation = 2;
+    ForkControlResult fork_control_result = 3;
+  }
+}
+
+message ServiceEnvelope {
+  oneof message {
+    HandshakeAccepted handshake_accepted = 1;
+    HandshakeRejected handshake_rejected = 2;
+    Acknowledgement acknowledgement = 3;
+    IntegrityError integrity_error = 4;
+    ForkControlRequest fork_control_request = 5;
+  }
+}
+
+message Handshake {
+  string runtime_id = 1;
+  string instance_id = 2;
+  repeated uint32 supported_versions = 3;
+  repeated string supported_capabilities = 4;
+  repeated string required_lume_capabilities = 5;
+  map<string, uint64> resume_positions = 6;
+  bytes authentication_evidence = 7;
+}
+
+message HandshakeAccepted {
+  uint32 selected_version = 1;
+  repeated string selected_capabilities = 2;
+  repeated string required_runtime_capabilities = 3;
+  map<string, uint64> acknowledged_positions = 4;
+  string session_id = 5;
+  uint32 maximum_in_flight = 6;
+}
+
+message HandshakeRejected {
+  string code = 1;
+  string message = 2;
+}
+
+message Observation {
+  string producer_id = 1;
+  uint64 producer_sequence = 2;
+  string evidence_id = 3;
+  oneof evidence {
+    TraceStarted trace_started = 10;
+    OperationObserved operation_observed = 11;
+    TraceEnded trace_ended = 12;
+    ProducerFinalized producer_finalized = 13;
+    LostRange lost_range = 14;
+    OpaqueExtension opaque_extension = 15;
+    TraceLinkAssertion trace_link_assertion = 16;
+    CheckpointDeclared checkpoint_declared = 17;
+    CheckpointAvailabilityAsserted checkpoint_availability_asserted = 18;
+  }
+}
+
+message TraceStarted {
+  string trace_id = 1;
+  string agent_id = 2;
+  string objective = 3;
+}
+
+message OperationObserved {
+  string trace_id = 1;
+  string operation_id = 2;
+  OperationType operation_type = 3;
+  optional string structural_parent_id = 4;
+  repeated string causal_dependency_ids = 5;
+  ItemLifecycle lifecycle = 6;
+  optional ItemOutcome outcome = 7;
+  PayloadAvailability payload_availability = 8;
+  bytes payload = 9;
+}
+
+message TraceEnded {
+  string trace_id = 1;
+  ItemOutcome outcome = 2;
+  optional string stable_code = 3;
+}
+
+message ProducerFinalized {
+  string trace_id = 1;
+  uint64 final_sequence = 2;
+}
+
+message LostRange {
+  string trace_id = 1;
+  uint64 first_sequence = 2;
+  uint64 last_sequence = 3;
+}
+
+message OpaqueExtension {
+  string namespace = 1;
+  string type_name = 2;
+  string schema_identity = 3;
+  uint32 schema_version = 4;
+  string encoding = 5;
+  PayloadSensitivity sensitivity = 6;
+  SemanticImpact semantic_impact = 7;
+  bytes original_bytes = 8;
+}
+
+message TraceLinkAssertion {
+  string link_id = 1;
+  LinkKind kind = 2;
+  string source_trace_id = 3;
+  optional string source_operation_id = 4;
+  optional string source_checkpoint_id = 5;
+  string child_trace_id = 6;
+  LinkAssertionSide assertion_side = 7;
+}
+
+message CheckpointDeclared {
+  string checkpoint_id = 1;
+  string source_trace_id = 2;
+  map<string, uint64> included_producer_positions = 3;
+  string runtime_id = 4;
+  string state_identity = 5;
+  bytes restore_reference = 6;
+  InterventionSchema intervention_schema = 7;
+  repeated ForkExecutionMode execution_modes = 8;
+  string recovery_profile_id = 9;
+}
+
+message CheckpointAvailabilityAsserted {
+  string checkpoint_id = 1;
+  CheckpointAvailability availability = 2;
+}
+
+message InterventionSchema {
+  string schema_id = 1;
+  repeated InterventionField fields = 2;
+}
+
+message InterventionField {
+  string field_id = 1;
+  string label = 2;
+  InterventionFieldType field_type = 3;
+  bool nullable = 4;
+  PayloadSensitivity sensitivity = 5;
+  optional sint64 integer_minimum = 6;
+  optional sint64 integer_maximum = 7;
+  optional double number_minimum = 8;
+  optional double number_maximum = 9;
+  optional uint64 minimum_size = 10;
+  optional uint64 maximum_size = 11;
+  repeated string enum_choices = 12;
+  repeated InterventionField children = 13;
+  optional string unsupported_type_name = 14;
+}
+
+message InterventionEntry {
+  string field_id = 1;
+  InterventionValue value = 2;
+}
+
+message InterventionValue {
+  oneof value {
+    NullValue null_value = 1;
+    string string_value = 2;
+    sint64 integer_value = 3;
+    double number_value = 4;
+    bool boolean_value = 5;
+    InterventionObject object_value = 6;
+    InterventionList list_value = 7;
+  }
+}
+
+message InterventionObject {
+  repeated InterventionObjectEntry entries = 1;
+}
+
+message InterventionObjectEntry {
+  string key = 1;
+  InterventionValue value = 2;
+}
+
+message InterventionList {
+  repeated InterventionValue values = 1;
+}
+
+message ForkControlRequest {
+  string request_id = 1;
+  string checkpoint_id = 2;
+  repeated InterventionEntry intervention = 3;
+  ForkExecutionMode execution_mode = 4;
+}
+
+message ForkControlResult {
+  string request_id = 1;
+  ForkRequestState state = 2;
+  optional string child_trace_id = 3;
+  optional string fork_link_id = 4;
+  optional string stable_code = 5;
+}
+
+message Acknowledgement {
+  string producer_id = 1;
+  uint64 highest_contiguous_sequence = 2;
+}
+
+message IntegrityError {
+  string evidence_id = 1;
+  string code = 2;
+  string message = 3;
+}
+
+enum OperationType {
+  OPERATION_TYPE_UNSPECIFIED = 0;
+  OPERATION_TYPE_AGENT_STEP = 1;
+  OPERATION_TYPE_MODEL_CALL = 2;
+  OPERATION_TYPE_TOOL_CALL = 3;
+}
+
+enum ItemLifecycle {
+  ITEM_LIFECYCLE_UNSPECIFIED = 0;
+  ITEM_LIFECYCLE_ACTIVE = 1;
+  ITEM_LIFECYCLE_ENDED = 2;
+}
+
+enum ItemOutcome {
+  ITEM_OUTCOME_UNSPECIFIED = 0;
+  ITEM_OUTCOME_SUCCEEDED = 1;
+  ITEM_OUTCOME_FAILED = 2;
+  ITEM_OUTCOME_CANCELLED = 3;
+}
+
+enum PayloadAvailability {
+  PAYLOAD_AVAILABILITY_UNSPECIFIED = 0;
+  PAYLOAD_AVAILABILITY_PRESENT = 1;
+  PAYLOAD_AVAILABILITY_REDACTED = 2;
+  PAYLOAD_AVAILABILITY_OMITTED = 3;
+  PAYLOAD_AVAILABILITY_TRUNCATED = 4;
+  PAYLOAD_AVAILABILITY_UNAVAILABLE = 5;
+}
+
+enum PayloadSensitivity {
+  PAYLOAD_SENSITIVITY_UNSPECIFIED = 0;
+  PAYLOAD_SENSITIVITY_ORDINARY = 1;
+  PAYLOAD_SENSITIVITY_PROTECTED = 2;
+  PAYLOAD_SENSITIVITY_WRITE_ONLY = 3;
+}
+
+enum SemanticImpact {
+  SEMANTIC_IMPACT_UNSPECIFIED = 0;
+  SEMANTIC_IMPACT_PRESENTATION_ONLY = 1;
+  SEMANTIC_IMPACT_CAUSALITY = 2;
+  SEMANTIC_IMPACT_COMPLETENESS = 3;
+  SEMANTIC_IMPACT_RESTORATION = 4;
+  SEMANTIC_IMPACT_VALIDATION = 5;
+  SEMANTIC_IMPACT_SENSITIVITY = 6;
+  SEMANTIC_IMPACT_FORK_BEHAVIOR = 7;
+}
+
+enum LinkKind {
+  LINK_KIND_UNSPECIFIED = 0;
+  LINK_KIND_DELEGATION = 1;
+  LINK_KIND_FORK = 2;
+}
+
+enum LinkAssertionSide {
+  LINK_ASSERTION_SIDE_UNSPECIFIED = 0;
+  LINK_ASSERTION_SIDE_SOURCE = 1;
+  LINK_ASSERTION_SIDE_CHILD = 2;
+}
+
+enum CheckpointAvailability {
+  CHECKPOINT_AVAILABILITY_UNSPECIFIED = 0;
+  CHECKPOINT_AVAILABILITY_AVAILABLE = 1;
+  CHECKPOINT_AVAILABILITY_UNKNOWN = 2;
+  CHECKPOINT_AVAILABILITY_UNAVAILABLE = 3;
+}
+
+enum InterventionFieldType {
+  INTERVENTION_FIELD_TYPE_UNSPECIFIED = 0;
+  INTERVENTION_FIELD_TYPE_STRING = 1;
+  INTERVENTION_FIELD_TYPE_INTEGER = 2;
+  INTERVENTION_FIELD_TYPE_NUMBER = 3;
+  INTERVENTION_FIELD_TYPE_BOOLEAN = 4;
+  INTERVENTION_FIELD_TYPE_ENUM = 5;
+  INTERVENTION_FIELD_TYPE_OBJECT = 6;
+  INTERVENTION_FIELD_TYPE_LIST = 7;
+  INTERVENTION_FIELD_TYPE_UNSUPPORTED = 8;
+}
+
+enum NullValue {
+  NULL_VALUE = 0;
+}
+
+enum ForkExecutionMode {
+  FORK_EXECUTION_MODE_UNSPECIFIED = 0;
+  FORK_EXECUTION_MODE_SANDBOXED = 1;
+  FORK_EXECUTION_MODE_LIVE = 2;
+}
+
+enum ForkRequestState {
+  FORK_REQUEST_STATE_UNSPECIFIED = 0;
+  FORK_REQUEST_STATE_RECOVERING = 1;
+  FORK_REQUEST_STATE_PREPARING = 2;
+  FORK_REQUEST_STATE_UNCERTAIN = 3;
+  FORK_REQUEST_STATE_REJECTED = 4;
+  FORK_REQUEST_STATE_CANCELLED = 5;
+  FORK_REQUEST_STATE_ACCEPTED = 6;
+}

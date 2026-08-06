@@ -1,0 +1,11 @@
+{
+  "name": "lume-workspace",
+  "private": true,
+  "packageManager": "pnpm@11.20.0",
+  "scripts": {
+    "build": "corepack pnpm --filter @lume/desktop-ui build",
+    "check": "corepack pnpm --filter @lume/desktop-ui check",
+    "dev": "corepack pnpm --filter @lume/desktop-ui dev",
+    "tauri": "corepack pnpm --filter @lume/desktop-ui tauri"
+  }
+}

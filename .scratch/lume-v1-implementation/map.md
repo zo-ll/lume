@@ -12,6 +12,7 @@ The release is complete only when the required domain, protocol, persistence, se
 
 - Product semantics are fixed by the v1 specification. Implementation discoveries that contradict it must return to the specification explicitly rather than silently changing behavior.
 - Complete the desktop experience design before scaffolding production code. The user may create this design with Claude; the resulting artifact must be reviewed against the normative workflow and safety states before ticket 01 resolves.
+- The approved desktop design is preserved in `docs/design/` and unblocks production Vue presentation, interaction behavior, and design-dependent view models.
 - Rust owns domain truth, storage, protocol behavior, authorization, and Tauri commands. Vue owns presentation and transient interaction state only.
 - The Lume Service is an independently supervised per-user process. Closing the Tauri application must not stop trace capture.
 - Shared and Linux implementation proceeds on `main`. macOS-specific service, IPC, credential-store, signing, packaging, and acceptance work proceeds on `platform/macos`.
@@ -22,6 +23,10 @@ The release is complete only when the required domain, protocol, persistence, se
 ## Decisions so far
 
 <!-- Resolved implementation tickets are indexed here. Decision detail remains in each ticket. -->
+
+- [Desktop investigation and fork experience](issues/01-design-desktop-experience.md): the approved wide/compact workspace, staged fork lifecycle, linked navigation, accessibility model, and Rust/Vue ownership boundary cover the desktop acceptance contract.
+- [Workspace foundation](issues/02-establish-rust-tauri-vue-workspace.md): a pinned Rust/Tauri/Vue workspace separates privileged, domain, protocol, persistence, runtime, and presentation boundaries behind one verification command.
+- [Protocol and conformance core](issues/03-build-protocol-and-conformance-core.md): protocol v1, core Rust semantics, and reusable fixtures establish the typed causal and control foundation.
 
 ## Initial frontier
 

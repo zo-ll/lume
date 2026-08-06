@@ -10,6 +10,15 @@ go.work.sum
 # Test artifacts
 *.test
 *.out
+/target/
+/node_modules/
+**/node_modules/
+**/dist/
+
+# Local service data
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 # IDE
 .idea/

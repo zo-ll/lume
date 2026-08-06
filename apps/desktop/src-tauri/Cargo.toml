@@ -1,0 +1,16 @@
+[package]
+name = "lume-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[build-dependencies]
+tauri-build = "2.6.3"
+
+[dependencies]
+serde.workspace = true
+tauri = "2.11.5"
+
+[lints]
+workspace = true
